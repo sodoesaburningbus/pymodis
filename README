@@ -1,0 +1,2 @@
+This package is a collection of modules for utilizing MODIS data.
+Currently there is only a module for the land cover dataset but others will be developed as I have time.
