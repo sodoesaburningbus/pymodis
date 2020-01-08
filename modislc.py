@@ -1,5 +1,5 @@
 #This module contains the classes and functions for manipulating MODIS land cover data.
-#It is highly reccomended that users leave the MODIS file naming convention in place.
+#It is highly recommended that users leave the MODIS file naming convention in place.
 #(I.e. don't rename your files.)
 #For full documentation of the dataset see the MCD12Q1 and MCD12C1 data pages at LPDAAC.
 #
@@ -15,6 +15,7 @@
 #PyProj      For the map projection
 #
 #Importing required modules
+from matplotlib.colors import ListedColormap
 from pyhdf import SD
 from pyproj import Proj
 import numpy
@@ -34,7 +35,7 @@ import numpy
 #nhtiles - number of MODIS tiles in the horizontal globally
 #nvtiles - number of MODIS tiles in the vertical globally
 #pixel_size - edge length of MODIS pixel in meters
-#npixels - number of pixels along edge of MODIS tile
+#npixels - number of pixels along edge of the MODIS tile
 #proj - dictionary containing MODIS map projection information
 #tile - tuple containing MODIS tile number (Horz, Vert)
 #hfile - HDF file object
@@ -87,7 +88,8 @@ class MCD12Q1():
         #Convertng x, y to lat/lon
         self.lons, self.lats = modis_grid(x2, y2, inverse=True)
                 
-        ### Creating attributes with data legends
+        ### Creating attributes with data legends and matching colormaps
+        ### Note that colormaps are my own suggestions and are not official in any capacity
         #IGBP legend (LC_Type1)
         self.lc1_legend = ["1 - Evergreen Needleleaf Forests", "2 - Evergreen Broadleaf Forests",
             "3 - Deciduous Needleleaf Forests", "4 - Deciduous Broadleaf Forests", 
@@ -96,6 +98,12 @@ class MCD12Q1():
             "11 - Permanent Wetlands", "12 - Croplands", "13 - Urban and Built-up",
             "14 - Cropland/Natural Vegetation Mosaics", "15 - Permanent Snow and Ice",
             "16 - Barren", "17 - Water Bodies", "255 - Unclassified"]
+        
+        #IGBP colormap (LC_Type1)        
+        self.lc1_cmap = ListedColormap(["darkgreen", "forestgreen", "darkolivegreen",
+            "olivedrab", "greenyellow", "olive", "darkkhaki", "darkorange", "orange",
+            "yellow", "navy", "mediumorchid", "red", "mediumpurple", "lightcyan",
+            "sienna", "blue", "grey"])
             
         #UMD legend (LC_Type2)
         self.lc2_legend = ["0 - Water bodies", "1 - Evergreen Needleleaf Forests",
@@ -162,5 +170,12 @@ class MCD12Q1():
     ### Method for accessing file variables
     def get(self, varname):
         return self.hfile.select(varname)[:]
+        
+    ### Method to clean up after object destruction
+    def __del__(self):
+        try:
+            self.hfile.end()
+        except:
+            pass
         
     
