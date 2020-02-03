@@ -182,7 +182,76 @@ class MCD12C1():
     ### Initializing function that attaches HDF file object to class object
     #It also defines attributes with land cover classification legends.
     def __init__(self, filepath):
-        #Creating attributes with metadata from the documentation
+        ### Opening HDF file object and attaching as an attribute
+        self.hfile = SD.SD(filepath, SD.SDC.READ)
+        self.structure = self.hfile.attributes()["StructMetadata.0"]
+        self.meta = self.hfile.attributes()["CoreMetadata.0"]
+        
+        ### Testing that file is on MOD12C1 grid
+        ind = self.structure.find("GridName=") #index of file grid name
+        self.grid = self.structure[ind+10:ind+17]
+        if (self.grid != "MOD12C1"):
+            print("Grid is NOT MOD12C1. Grid is {}.\nReturning".format(self.grid))
+            self.hfile.end()
+            return
+
+        ### Creating attributes from file metadata (and documentation)
         self.pixel_size = 0.05
+        ind = self.structure.find("XDim=") #Index of horz file dimension
+        self.ncols = int(self.structure[ind+5:ind+9])
+        ind = self.structure.find("YDim=") #Index of vertical file dimension
+        self.nrows = int(self.structure[ind+5:ind+9])
     
-        #Creating MCD12C1 grid
+        ### Creating MCD12C1 grid
+        self.lats = numpy.linspace(90, -90, self.nrows)
+        self.lons = numpy.linspace(-180, 180, self.ncols)
+
+        ### Creating attributes with data legends and matching colormaps
+        ### Note that colormaps are my own suggestions and are not official in any capacity
+        #IGBP legend (Majority_Land_Cover_Type_1)
+        self.lc1_legend = [ "0 - Water Bodies","1 - Evergreen Needleleaf Forests", "2 - Evergreen Broadleaf Forests",
+            "3 - Deciduous Needleleaf Forests", "4 - Deciduous Broadleaf Forests", 
+            "5 - Mixed Forests", "6 - Closed Shrublands", "7 - Open Shrublands",
+            "8 - Woody Savannas", "9 - Savannas", "10 - Grasslands",
+            "11 - Permanent Wetlands", "12 - Croplands", "13 - Urban and Built-up",
+            "14 - Cropland/Natural Vegetation Mosaics", "15 - Permanent Snow and Ice",
+            "16 - Barren", "255 - Unclassified"]
+        
+        #IGBP colormap (Majority_Land_Cover_Type_1)        
+        self.lc1_cmap = ListedColormap(["blue", "darkgreen", "forestgreen", "darkolivegreen",
+            "olivedrab", "greenyellow", "olive", "darkkhaki", "darkorange", "orange",
+            "yellow", "navy", "mediumorchid", "red", "mediumpurple", "lightcyan",
+            "sienna", "grey"])
+
+        #UMD legend (Majority_Land_Cover_Type_2)
+        self.lc2_legend = ["0 - Water bodies", "1 - Evergreen Needleleaf Forests",
+            "2 - Evergreen Broadleaf Forests", "3 - Deciduous Needleleaf Forests", "4 - Deciduous Broadleaf Forests", 
+            "5 - Mixed Forests", "6 - Closed Shrublands", "7 - Open Shrublands",
+            "8 - Woody Savannas", "9 - Savannas", "10 - Grasslands",
+            "11 - Permanent Wetlands", "12 - Croplands", "13 - Urban and Built-up",
+            "14 - Cropland/Natural Vegetation Mosaics", "15 - Non-Vegetated Lands",
+            "255 - Unclassified"]
+            
+        #LAI legend (Majority_Land_Cover_Type_3)
+        self.lc3_legend = ["0 - Water bodies", "1 - Grasslands", "2 - Shrublands",
+            "3 - Broadleaf Croplands", "4 - Savannas", "5 - Evergreen Broadleaf Forests",
+            "6 - Deciduous Broadleaf Forests", "7 - Evergreen Needleleaf Forests",
+            "8 - Deciduous Needleleaf Forests", "9 - Non-vegetated Lands",
+            "10 - Urban and Built-up Lands", "255 - Unclassified"]
+
+    ### Method for accessing file variables
+    def get(self, varname):
+        return self.hfile.select(varname)[:]
+
+    ### Method to cleanup after file destruction
+    def __del__(self):
+        try:
+            self.hfile.end()
+        except:
+            pass
+
+
+
+
+
+
