@@ -177,5 +177,12 @@ class MCD12Q1():
             self.hfile.end()
         except:
             pass
-        
+
+class MCD12C1():
+    ### Initializing function that attaches HDF file object to class object
+    #It also defines attributes with land cover classification legends.
+    def __init__(self, filepath):
+        #Creating attributes with metadata from the documentation
+        self.pixel_size = 0.05
     
+        #Creating MCD12C1 grid
